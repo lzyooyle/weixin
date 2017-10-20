@@ -1,0 +1,75 @@
+<video id="myVideo" src="{{src}}" danmu-list="{{danmuList}}"   enable-danmu danmu-btn controls></video>  
+  <view class="btn-area">  
+    <button type="primary" bindtap="videoPlay">播放</button>  
+    <button type="primary" bindtap="videoPause">暂停</button>  
+    <input bindblur="bindInputBlur" placeholder="请输入弹幕内容"/>       
+	<button bindtap="bindButtonTap">获取视频</button>  
+    <button bindtap="bindSendDanmu">发送弹幕</button>  
+  </view>  
+
+function getRandomColor () {//随机获取颜色  
+  let rgb = []   //设置一个数组
+  for (let i = 0 ; i < 3; ++i){   //for循环
+    let color = Math.floor(Math.random() * 256).toString(16)  //随机变量
+    color = color.length == 1 ? '0' + color : color  //判断
+    rgb.push(color)  //push() 方法可向数组的末尾添加一个或多个元素
+  }  
+  return '#' + rgb.join('')  //返回一个颜色值
+}
+Page({
+  onReady: function (res) {
+    this.videoContext = wx.createVideoContext('myVideo');//获取上下文  
+  },
+  inputValue: '',    
+  data: {
+    src: '地址',   
+    danmuList: [
+      {
+        text: '第 1s 出现的弹幕',
+        color: '#ff0000',
+        time: 1
+      },
+      {
+        text: '第 3s 出现的弹幕',
+        color: '#ff00ff',
+        time: 3
+      }]  ,               
+  },
+  videoPlay: function () {
+    this.videoContext.play();
+  },
+  //暂停  
+  videoPause: function () {
+    this.videoContext.pause();
+  },
+  //写弹幕  
+  bindInputBlur: function (e) {
+	//当键盘输入时，触发input事件，event.detail = {value, cursor}，处理函数可以直接 return 一个字符串，将替换输入框的内容	  
+    this.inputValue = e.detail.value
+  },//获取视频  
+  bindButtonTap: function () {
+    var that = this
+    wx.chooseVideo({
+      sourceType: ['album', 'camera'],
+      maxDuration: 60,
+      camera: ['front', 'back'],
+      success: function (res) {
+        that.setData({
+          src: res.tempFilePath
+        })
+      }
+    })
+  },
+  //发送弹幕  
+  bindSendDanmu: function () {
+    this.videoContext.sendDanmu({
+      text: this.inputValue,
+      color: getRandomColor()
+    })
+  }  ,
+  //事件处理函数
+  bindViewTap: function() {
+    wx.navigateTo({
+      url: '../logs/logs'
+    })
+  },  
