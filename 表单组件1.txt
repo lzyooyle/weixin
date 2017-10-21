@@ -1,0 +1,87 @@
+.section{  
+    margin:10px 20px;   
+    display:flex;  
+    border-bottom:1px solid #ccc;  
+    padding:15px 0;  
+}  
+.section__title{  
+    width:30%;  
+}  
+.section__iput{  
+    width:70%;  
+    line-height:25px;  
+    border:1px solid #ccc;  
+}  
+.btn-area{  
+    display:flex;  
+    justify-content:center;  
+    margin:20px;  
+}  
+.btn-area button{  
+    width:40%;  
+}  
+
+<form bindsubmit="formSubmit" bindreset="formReset">  
+    <view class="section">  
+        <view class="section__title">姓名：</view>  
+        <input name="name" placeholder="请输入姓名"  maxlength="12" type="text" focus="false" class="section__iput"/>  
+    </view>  
+    <view class="section">  
+        <view class="section__title">密码：</view>  
+        <input name="pwd" placeholder="请输入您的密码" password="true" maxlength="12" type="text" focus="false" class="section__iput"/>  
+    </view>  
+    <view class="section section_gap">  
+        <view class="section__title">性别：</view>  
+        <radio-group name="radio-group">  
+            <label><radio value="radio1"/>男</label>  
+            <label><radio value="radio2"/>女</label>  
+        </radio-group>  
+    </view>  
+    <view class="section section_gap">  
+        <view class="section__title">兴趣：</view>  
+        <checkbox-group name="checkbox">  
+            <label><checkbox value="吃"/>吃</label>  
+            <label><checkbox value="玩"/>玩</label>  
+        </checkbox-group>  
+    </view>  
+    <view class="section">  
+        <view class="section__title">日期:</view>  
+        <picker mode="date" value="{{date}}" start="2015-09-01" end="2017-09-01" bindchange="bindDateChange" class="section__iput">  
+            <view class="picker">  
+            {{date}}  
+            </view>  
+        </picker>  
+    </view>  
+    <view class="section section_gap">  
+        <view class="section__title">开关</view>  
+        <switch name="switch"/>  
+    </view>  
+    <view class="section">  
+        <view class="section__title">留言：</view>  
+        <textarea auto-height placeholder="请输入内容" />  
+    </view>  
+    <view class="btn-area">  
+        <button formType="submit" type="primary">Submit</button>  
+        <button formType="reset"  type="default">Reset</button>  
+    </view>  
+</form>  
+
+Page({  
+    data: {  
+        date: '2016-09-01',  
+    },  
+    //日期  
+    bindDateChange: function(e) {  
+        this.setData({  
+          date: e.detail.value  
+        })  
+    },  
+    //提交  
+    formSubmit: function(e) {  
+        console.log('form发生了submit事件，携带数据为：', e.detail.value)  
+    },  
+    //重置  
+    formReset: function() {  
+        console.log('form发生了reset事件')  
+    }  
+})
