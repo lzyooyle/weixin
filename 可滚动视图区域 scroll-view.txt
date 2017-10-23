@@ -1,0 +1,63 @@
+.scroll-view_H{  
+  white-space: nowrap;  
+}  
+.scroll-view-item{  
+  height: 200px;  
+}  
+.scroll-view-item_H{  
+  display: inline-block;  
+  width: 100%;  
+  height: 200px;  
+}  
+#green{  
+    background:green;  
+}  
+#red{  
+    background:red;  
+}  
+#yellow{  
+    background:yellow;  
+}  
+#blue{  
+    background:blue;  
+}  
+
+<view class="section">  
+  <view class="section__title">vertical scroll竖直方向</view>  
+  <scroll-view scroll-y="true" style="height: 200px;" bindscrolltoupper="upper" bindscrolltolower="lower" bindscroll="scroll" scroll-into-view="{{toView}}" scroll-top="{{scrollTop}}">  
+    <view id="green" class="scroll-view-item bc_green"></view>  
+    <view id="red"  class="scroll-view-item bc_red"></view>  
+    <view id="yellow" class="scroll-view-item bc_yellow"></view>  
+    <view id="blue" class="scroll-view-item bc_blue"></view>  
+  </scroll-view>  
+  <view class="btn-area">  
+    <button size="mini" bindtap="tapMove">click me to scroll</button>  
+  </view>  
+</view> 
+
+var order = ['red', 'yellow', 'blue', 'green', 'red']  
+Page({  
+  data: {  
+    toView: 'green',  
+    scrollTop: 100,  
+    scrollLeft: 0  
+  },  
+  //滚动条滚到顶部的时候触发  
+  upper: function(e) {  
+    console.log("顶部");  
+  },  
+  //滚动条滚到底部的时候触发  
+  lower: function(e) {  
+    console.log("底");  
+  },  
+  //滚动条滚动后触发  
+  scroll: function(e) {  
+    console.log("滚动");  
+  },  
+  //通过设置滚动条位置实现画面滚动  
+  tapMove: function(e) {  
+    this.setData({  
+      scrollTop: this.data.scrollTop + 10  
+    })  
+  }  
+})  
