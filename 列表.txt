@@ -1,0 +1,145 @@
+1.在组件上使用wx:for控制属性绑定一个数组，即可使用数组中各项的数据重复渲染该组件。 默认数组的当前项的下标变量名默认为index，数组当前项的变量名默认为item
+2.使用wx:for-item可以指定数组当前元素的变量名。使用wx:for-index可以指定数组当前下标的变量名：
+3.wx:for也可以嵌套
+1.用户中心列表
+<view wx:for='{{items}}'>
+{{index}}{{item.message}}
+</view>
+
+ items:[{
+  message:'foo'
+},{
+  message:'bar'
+}],
+
+<view wx:for='{{array}}' wx:for-index='idx' wx:for-item='itemName'>
+{{idx}}:{{itemName.name}}
+</view>
+
+array:[{
+  name:'xiaoli'
+},{
+  name:'xiaogao'
+}],
+
+<view wx:for='{{[1,2,3,4,5,6,7,8,9]}}' wx:for-item='i'>
+<view wx:for='{{[1,2,3,4,5,6,7,8,9]}}' wx:for-item='j'>
+<view wx:if='{{i<=j}}'>
+{{i}}*{{j}}={{i*j}}
+</view>
+</view>
+</view>
+
+/**list.wxss**/  
+.weui_cell {  
+    position: relative;  
+    display: flex;  
+    padding: 15px;  
+    -webkit-box-align: center;  
+    -ms-flex-align: center;  
+    align-items: center;  
+    border-bottom: 1px solid #dadada;  
+}  
+  
+.weui_cell_hd {  
+    display: inline-block;  
+    width: 20px;  
+    margin-right: 5px;  
+}  
+  
+.weui_cell_hd image {  
+    width: 100%;  
+    height: 20px;  
+    vertical-align: -2px;  
+}  
+  
+.weui_cell_bd {  
+    display: inline-block;  
+}  
+  
+.weui_cell_bd_p {  
+    font-size: 14px;  
+    color: #939393;  
+}  
+  
+.badge {  
+    position: absolute;  
+    top: 18px;  
+    right: 40px;  
+    width: 15px;  
+    height: 15px;  
+    line-height: 15px;  
+    background: #ff0000;  
+    color: #fff;  
+    border-radius: 50%;  
+    text-align: center;  
+    font-size: 8px;  
+}  
+  
+.with_arrow {  
+    position: absolute;  
+    top: 18px;  
+    right: 15px;  
+    width: 15px;  
+    height: 15px;  
+    background-image: url(../../dist/images/icon-arrowdown.png);  
+    background-repeat: no-repeat;  
+    background-size: 100% 100%;  
+}
+
+<!--list.wxml-->  
+<block wx:for="{{userListInfo}}">  
+    <view class="weui_cell">  
+        <view class="weui_cell_hd">  
+            <image src="{{item.icon}}"></image>  
+        </view>  
+        <view class="weui_cell_bd">  
+            <view class="weui_cell_bd_p"> {{item.text}} </view>  
+        </view>  
+        <view wx:if="{{item.isunread}}" class="badge">{{item.unreadNum}}</view>  
+        <view class="with_arrow"></view>  
+    </view>  
+</block>
+
+//list.js  
+var app = getApp()  
+Page( {  
+  data: {  
+    userInfo: {},  
+    userListInfo: [ {  
+      icon: '../../dist/images/iconfont-dingdan.png',  
+      text: '我的订单',  
+      isunread: true,  
+      unreadNum: 2  
+    }, {  
+        icon: '../../dist/images/iconfont-card.png',  
+        text: '我的代金券',  
+        isunread: false,  
+        unreadNum: 2  
+      }, {  
+        icon: '../../dist/images/iconfont-icontuan.png',  
+        text: '我的拼团',  
+        isunread: true,  
+        unreadNum: 1  
+      }, {  
+        icon: '../../dist/images/iconfont-shouhuodizhi.png',  
+        text: '收货地址管理'  
+      }, {  
+        icon: '../../dist/images/iconfont-kefu.png',  
+        text: '联系客服'  
+      }, {  
+        icon: '../../dist/images/iconfont-help.png',  
+        text: '常见问题'  
+      }]  
+  },  
+  onLoad: function() {  
+    var that = this  
+    //调用应用实例的方法获取全局数据  
+    app.getUserInfo( function( userInfo ) {  
+      //更新数据  
+        that.setData( {  
+            userInfo: userInfo  
+         })  
+    })  
+  }  
+})
