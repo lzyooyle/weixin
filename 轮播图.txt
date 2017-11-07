@@ -1,0 +1,44 @@
+轮播图：swiper滑块视图容器。
+1.编写页面结构
+pages/index/index.wxml
+<!--index.wxml-->  
+<view>  
+    <swiper indicator-dots="{{indicatorDots}}"    
+            autoplay="{{autoplay}}" interval="{{interval}}" duration="{{duration}}">    
+            <block wx:for="{{imgUrls}}">    
+                <swiper-item>    
+                    <navigator url="{{item.link}}" hover-class="navigator-hover">    
+                        <image src="{{item.url}}" class="slide-image" width="355" height="150"/>    
+                    </navigator>     
+                </swiper-item>    
+            </block>    
+    </swiper>   
+</view>
+注意：不要在view中加css设置:display: flex;否则效果呈现不了
+
+2.设置数据
+了解属性，方可设置
+swiper-item仅可放置在<swiper/>组件中，宽高自动设置为100%。
+在index.js中设置数据
+//index.js    
+//获取应用实例    
+var app = getApp()    
+Page({  
+    data: {    
+        imgUrls: [  {    
+            link:'/pages/index/index',    
+            url:'../uploads/a01.jpg'     
+        },{    
+            link:'/pages/logs/logs',    
+            url:'../uploads/a02.jpg'    
+        },{    
+            link:'/pages/user/user',    
+            url:'../uploads/a03.jpg'      
+        }     
+    ],    
+        indicatorDots: true,    
+        autoplay: true,    
+        interval: 5000,    
+        duration: 1000  
+    }   
+})
