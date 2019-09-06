@@ -1,87 +1,19 @@
-<?php
+﻿<?php
 /**
   * wechat php test
   */
-
+require 'class.wechatCallbackapiTest.php';
+require 'class.WxService.php';
 //define your token
 define("TOKEN", "weixin");
 $wechatObj = new wechatCallbackapiTest();
 $wechatObj->valid();
 
-class wechatCallbackapiTest
-{
-	public function valid()
-    {
-        $echoStr = $_GET["echostr"];
-
-        //valid signature , option
-        if($this->checkSignature()){
-        	echo $echoStr;
-        	exit;
-        }
-    }
-
-    public function responseMsg()
-    {
-		//get post data, May be due to the different environments
-		$postStr = $GLOBALS["HTTP_RAW_POST_DATA"];
-
-      	//extract post data
-		if (!empty($postStr)){
-                
-              	$postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
-                $fromUsername = $postObj->FromUserName;
-                $toUsername = $postObj->ToUserName;
-                $keyword = trim($postObj->Content);
-                $time = time();
-                $textTpl = "<xml>
-							<ToUserName><![CDATA[%s]]></ToUserName>
-							<FromUserName><![CDATA[%s]]></FromUserName>
-							<CreateTime>%s</CreateTime>
-							<MsgType><![CDATA[%s]]></MsgType>
-							<Content><![CDATA[%s]]></Content>
-							<FuncFlag>0</FuncFlag>
-							</xml>";             
-				if(!empty( $keyword ))
-                {
-              		$msgType = "text";
-                	$contentStr = "Welcome to wechat world!";
-                	$resultStr = sprintf($textTpl, $fromUsername, $toUsername, $time, $msgType, $contentStr);
-                	echo $resultStr;
-                }else{
-                	echo "Input something...";
-                }
-
-        }else {
-        	echo "";
-        	exit;
-        }
-    }
-		
-	private function checkSignature()
-	{
-        $signature = $_GET["signature"];
-        $timestamp = $_GET["timestamp"];
-        $nonce = $_GET["nonce"];	
-        		
-		$token = TOKEN;
-		$tmpArr = array($token, $timestamp, $nonce);
-		sort($tmpArr);
-		$tmpStr = implode( $tmpArr );
-		$tmpStr = sha1( $tmpStr );
-		
-		if( $tmpStr == $signature ){
-			return true;
-		}else{
-			return false;
-		}
-	}
-}
 error_reporting(1);
 header('Content-type:text/html; Charset=utf-8');
 /* 配置开始 */
-$appid = 'wx247834077c5204af';  //微信公众平台->开发->基本配置->AppID
-$appKey = 'a359f5dff1185542632ad60c4e09177f';   //微信公众平台->开发->基本配置->AppSecret
+$appid = 'wx4a21eb993c9a3062';  //微信公众平台->开发->基本配置->AppID
+$appKey = 'b5997983c24d4fa45113dbdbb8292fb5';   //微信公众平台->开发->基本配置->AppSecret
 /* 配置结束 */
 
 //①、获取用户openid
@@ -90,20 +22,107 @@ $data = $wxPay->GetOpenid();      //获取openid
 if(!$data['openid']) exit('获取openid失败');
 //②、获取用户信息
 $user = $wxPay->getUserInfo($data['openid'],$data['access_token']);
+    $appid = 'wx4a21eb993c9a3062';  //此处填写绑定的微信公众号的appid
+    $appsecret = 'b5997983c24d4fa45113dbdbb8292fb5'; //此处填写绑定的微信公众号的密钥id
+
+    // 步骤2.生成签名的随机串
+    function nonceStr($length){
+        $str = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJK1NGJBQRSTUVWXYZ';//随即串，62个字符
+        $strlen = 62;
+        while($length > $strlen){
+        $str .= $str;
+        $strlen += 62;
+        }
+        $str = str_shuffle($str);
+        return substr($str,0,$length);
+    }
+
+    // 步骤3.获取access_token
+    $result = http_get('https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$appid.'&secret='.$appsecret);
+    $json = json_decode($result,true);
+    $access_token = $json['access_token'];
+
+    function http_get($url){
+        $oCurl = curl_init();
+        if(stripos($url,"https://")!==FALSE){
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($oCurl, CURLOPT_SSL_VERIFYHOST, FALSE);
+            curl_setopt($oCurl, CURLOPT_SSLVERSION, 1); //CURL_SSLVERSION_TLSv1
+        }
+        curl_setopt($oCurl, CURLOPT_URL, $url);
+        curl_setopt($oCurl, CURLOPT_RETURNTRANSFER, 1 );
+        $sContent = curl_exec($oCurl);
+        $aStatus = curl_getinfo($oCurl);
+        curl_close($oCurl);
+        if(intval($aStatus["http_code"])==200){
+            return $sContent;
+        }else{
+            return false;
+        }
+    }
+
+    // 步骤4.获取ticket
+    $url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?type=jsapi&access_token=$access_token";
+    $res = json_decode ( http_get ( $url ) );
+    $ticket = $res->ticket;
+
+
+    // 步骤5.生成wx.config需要的参数
+    $surl = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $ws = getWxConfig( $ticket,$surl,time(),nonceStr(16) );
+	//var_dump(nonceStr(16));
+    function getWxConfig($jsapiTicket,$url,$timestamp,$nonceStr) {
+        $string = "jsapi_ticket=$jsapiTicket&noncestr=$nonceStr&timestamp=$timestamp&url=$url";
+        $signature = sha1 ( $string );
+
+        $WxConfig["appId"] = $appid;
+        $WxConfig["nonceStr"] = $nonceStr;
+        $WxConfig["timestamp"] = $timestamp;
+		var_dump($timestamp);
+        $WxConfig["url"] = $url;
+        $WxConfig["signature"] = $signature;
+        $WxConfig["rawString"] = $string;
+        return $WxConfig;
+    }
+var_dump($_GET);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="renderer" content="webkit" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <title>微信获取用户信息demo</title>
+    <title>旅游共享会</title>
     <link href="https://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.bootcss.com/jquery/2.1.0/jquery.min.js"></script>
+	<!--步骤6.调用JS接口-->
+	<script src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>	
 </head>
 <body>
-<?=var_dump($user)?>
+<script>
+wx.config({
+        debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+        appId: 'wx4a21eb993c9a3062', // 必填，公众号的唯一标识
+        timestamp: "<?php echo $ws["timestamp"]; ?>", // 必填，生成签名的时间戳
+        nonceStr: '<?php echo $ws["nonceStr"]; ?>', // 必填，生成签名的随机串
+        signature: '<?php echo $ws["signature"]; ?>',// 必填，签名，见附录1
+        jsApiList: [
+            'checkJsApi',
+            'onMenuShareTimeline',
+            'onMenuShareAppMessage',
+            'onMenuShareQQ',
+            'onMenuShareWeibo'
+        ] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+    });
+  var wstitle = "旅游共享会";  //此处填写分享标题
+  var wsdesc = "分享旅游产品，赚取高额佣金！"; //此处填写分享简介
+  var wslink = "<?php echo "http://".$_SERVER["HTTP_HOST"].$_SERVER["PHP_SELF"]."?from_openid=".$user['openid']; ?>"; //此处获取分享链接
+  var wsimg = "https://ss1.baidu.com/6ONXsjip0QIZ8tyhnq/it/u=3243730018,2989919252&fm=58&bpow=729&bpoh=1050"; //此处获取分享缩略图
+
+
+</script>
+<script src="http://www.yudouyudou.com/demo/wxshare/wxshare.js"></script>
 <div class="container">
     <div class="row">
         <h1>你的基本信息如下：</h1>
@@ -153,164 +172,3 @@ $user = $wxPay->getUserInfo($data['openid'],$data['access_token']);
 </div>
 </body>
 </html>
-<?php
-class WxService
-{
-    protected $appid;
-    protected $appKey;
-
-    public $data = null;
-
-    public function __construct($appid, $appKey)
-    {
-        $this->appid = $appid; //微信支付申请对应的公众号的APPID
-        $this->appKey = $appKey; //微信支付申请对应的公众号的APP Key
-    }
-
-    /**
-     * 通过跳转获取用户的openid，跳转流程如下：
-     * 1、设置自己需要调回的url及其其他参数，跳转到微信服务器https://open.weixin.qq.com/connect/oauth2/authorize
-     * 2、微信服务处理完成之后会跳转回用户redirect_uri地址，此时会带上一些参数，如：code
-     *
-     * @return 用户的openid
-     */
-    public function GetOpenid()
-    {
-        //通过code获得openid
-        if (!isset($_GET['code'])){
-            //触发微信返回code码
-            $baseUrl = $this->getCurrentUrl();
-            $url = $this->__CreateOauthUrlForCode($baseUrl);
-            Header("Location: $url");
-            exit();
-        } else {
-            //获取code码，以获取openid
-            $code = $_GET['code'];
-            $openid = $this->getOpenidFromMp($code);
-            return $openid;
-        }
-    }
-
-    public function getCurrentUrl()
-    {
-        $scheme = $_SERVER['HTTPS']=='on' ? 'https://' : 'http://';
-        $uri = $_SERVER['PHP_SELF'].$_SERVER['QUERY_STRING'];
-        if($_SERVER['REQUEST_URI']) $uri = $_SERVER['REQUEST_URI'];
-        $baseUrl = urlencode($scheme.$_SERVER['HTTP_HOST'].$uri);
-        return $baseUrl;
-    }
-
-    /**
-     * 通过code从工作平台获取openid机器access_token
-     * @param string $code 微信跳转回来带上的code
-     * @return openid
-     */
-    public function GetOpenidFromMp($code)
-    {
-        $url = $this->__CreateOauthUrlForOpenid($code);        
-        $res = self::curlGet($url);
-        $data = json_decode($res,true);
-        $this->data = $data;
-        return $data;
-    }
-
-    /**
-     * 构造获取open和access_toke的url地址
-     * @param string $code，微信跳转带回的code
-     * @return 请求的url
-     */
-    private function __CreateOauthUrlForOpenid($code)
-    {
-        $urlObj["appid"] = $this->appid;
-        $urlObj["secret"] = $this->appKey;
-        $urlObj["code"] = $code;
-        $urlObj["grant_type"] = "authorization_code";
-        $bizString = $this->ToUrlParams($urlObj);
-        return "https://api.weixin.qq.com/sns/oauth2/access_token?".$bizString;
-    }
-
-    /**
-     * 构造获取code的url连接
-     * @param string $redirectUrl 微信服务器回跳的url，需要url编码
-     * @return 返回构造好的url
-     */
-    private function __CreateOauthUrlForCode($redirectUrl)
-    {
-        $urlObj["appid"] = $this->appid;
-        $urlObj["redirect_uri"] = "$redirectUrl";
-        $urlObj["response_type"] = "code";
-        $urlObj["scope"] = "snsapi_userinfo";
-        $urlObj["state"] = "STATE";
-        $bizString = $this->ToUrlParams($urlObj);
-        return "https://open.weixin.qq.com/connect/oauth2/authorize?".$bizString;
-    }
-
-    /**
-     * 拼接签名字符串
-     * @param array $urlObj
-     * @return 返回已经拼接好的字符串
-     */
-    private function ToUrlParams($urlObj)
-    {
-        $buff = "";
-        foreach ($urlObj as $k => $v)
-        {
-            if($k != "sign") $buff .= $k . "=" . $v . "&";
-        }
-        $buff = trim($buff, "&");
-        return $buff;
-    }
-
-    /**
-     * 获取用户信息
-     * @param string $openid 调用【网页授权获取用户信息】接口获取到用户在该公众号下的Openid
-     * @return string
-     */
-    public function getUserInfo($openid,$access_token)
-    {
-
-        $response = self::curlGet('https://api.weixin.qq.com/sns/userinfo?access_token='.$access_token.'&openid='.$openid.'&lang=zh_CN');
-        return json_decode($response,true);
-        
-    }
-
-    public static function curlGet($url = '', $options = array())
-    {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        if (!empty($options)) {
-            curl_setopt_array($ch, $options);
-        }
-        //https请求 不验证证书和host
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        $data = curl_exec($ch);
-        curl_close($ch);
-        return $data;
-    }
-
-    public static function curlPost($url = '', $postData = '', $options = array())
-    {
-        if (is_array($postData)) {
-            $postData = http_build_query($postData);
-        }
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30); //设置cURL允许执行的最长秒数
-        if (!empty($options)) {
-            curl_setopt_array($ch, $options);
-        }
-        //https请求 不验证证书和host
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        $data = curl_exec($ch);
-        curl_close($ch);
-        return $data;
-    }
-
-}
-?>
